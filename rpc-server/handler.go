@@ -24,7 +24,7 @@ func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.Pu
 
 func areYouLucky() (int32, string) {
 	if rand.Int31n(2) == 1 {
-		return 0, "success"
+		return 200, "success"
 	} else {
 		return 500, "oops"
 	}
