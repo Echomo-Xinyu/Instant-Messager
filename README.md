@@ -8,5 +8,26 @@ In order to run the application, you need to have `go`, `redis` and `docker` ins
 
 After running `docker compose -f "docker-compose.yml" up -d --build`, you will have the application running on docker.
 
-- `curl -X POST 'localhost:8080/api/send?sender=a&chat=a:b&text=hi'` means that `user: a` sends a message of content `hi` in the chat between `user: a` and `user: b`;
-- `curl 'localhost:8080/api/pull?chat=a%3Ab'` pulls the messages in chat between `user: a` and `user: b`.
+```
+curl --location 'localhost:8080/api/send' \
+--header 'Content-Type: application/json' \
+--data '{
+    "chat": "a1:a2",
+    "text": "hi",
+    "sender": "a2"
+}'
+```
+
+means to send a message of content `hi` from `user: a2` in the chat between `user: a1` and `user: a2`;
+
+```
+curl --location 'localhost:8080/api/send' \
+--header 'Content-Type: application/json' \
+--data '{
+    "chat": "a1:a2",
+    "text": "test2",
+    "sender": "a2"
+}'
+```
+
+means to pull messages in the chat between `user: a1` and `user: a2`.
