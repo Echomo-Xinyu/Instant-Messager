@@ -28,15 +28,14 @@ func (c *RedisClient) InitClient(ctx context.Context, address, password string) 
 }
 
 func (c *RedisClient) SaveMessage(ctx context.Context, roomID string, message *Message) error {
-	// Marshal the Go struct into JSON bytes
 	text, err := json.Marshal(message)
 	if err != nil {
 		return err
 	}
 
 	member := &redis.Z{
-		Score:  float64(message.Timestamp), // The sort key
-		Member: text,                       // Data
+		Score:  float64(message.Timestamp),
+		Member: text,
 	}
 
 	_, err = c.cli.ZAdd(ctx, roomID, *member).Result()

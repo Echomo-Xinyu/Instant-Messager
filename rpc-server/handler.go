@@ -48,13 +48,54 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 }
 
 func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.PullResponse, error) {
-	resp := rpc.NewPullResponse()
-	resp.Code, resp.Msg = areYouLucky()
-	return resp, nil
-}
+	roomID, err := getRoomID(req.GetChat())
+	if err != nil {
+		return nil, err
+	}
 
-func areYouLucky() (int32, string) {
-	return 200, "success"
+	limit := int64(req.GetLimit())
+	// default limit 5
+	if limit == 0 {
+		limit = 5
+	}
+
+	start := req.GetCursor()
+	end := start + limit // did not minus 1 on purpose for hasMore check later
+
+	messages, err := rdb.GetMessagesByRoomID(ctx, roomID, start, end, req.GetReverse())
+	if err != nil {
+		return nil, err
+	}
+
+	respMessages := make([]*rpc.Message, 0)
+	var counter int64 = 0
+	var nextCursor int64 = 0
+	hasMore := false
+	for _, msg := range messages {
+		if counter+1 > limit {
+			// having extra value here means it has more data
+			hasMore = true
+			nextCursor = end
+			break // do not return the last message
+		}
+		temp := &rpc.Message{
+			Chat:     req.GetChat(),
+			Text:     msg.Message,
+			Sender:   msg.Sender,
+			SendTime: msg.Timestamp,
+		}
+		respMessages = append(respMessages, temp)
+		counter += 1
+	}
+
+	resp := rpc.NewPullResponse()
+	resp.Messages = respMessages
+	resp.Code = 0
+	resp.Msg = "success"
+	resp.HasMore = &hasMore
+	resp.NextCursor = &nextCursor
+
+	return resp, nil
 }
 
 func getRoomID(chat string) (string, error) {
